@@ -73,18 +73,9 @@ open class Tree<KeyT : Comparable<KeyT>, ValueT> {
     }
 
     private fun insertNode(node: Node<KeyT, ValueT>): Boolean {
-        val temp = findNodeOrPotentialParent(node.key) ?: run {
-            root = node
-            return true
-        }
-
-        if (temp.key < node.key) {
-            node.parent = temp
-            temp.rightChild = node
-        } else {
-            node.parent = temp
-            temp.leftChild = node
-        }
+        val temp = findNodeOrPotentialParent(node.key)!!
+        node.parent = temp
+        temp.rightChild = node
         return true
     }
 

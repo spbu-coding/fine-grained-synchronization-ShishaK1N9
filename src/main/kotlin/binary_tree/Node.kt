@@ -1,6 +1,6 @@
 package binary_tree
 
-open class Node<KeyT : Comparable<KeyT>, ValueT>(var key: KeyT, var value: ValueT) {
+internal class Node<KeyT : Comparable<KeyT>, ValueT>(var key: KeyT, var value: ValueT) {
 
     var parent: Node<KeyT, ValueT>? = null
     var leftChild: Node<KeyT, ValueT>? = null
