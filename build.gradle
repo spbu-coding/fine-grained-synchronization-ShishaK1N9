@@ -1,0 +1,39 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.4.21'
+    id 'jacoco'
+}
+
+group 'org.team'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testImplementation(platform('org.junit:junit-bom:5.7.1'))
+    implementation "org.jetbrains.kotlin:kotlin-reflect:1.4.21"
+}
+
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
+            useJUnitPlatform()
+    maxHeapSize = '2G'
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+    reports.html.destination = file("${buildDir}/reports/test")
+}
+
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+            reports {
+                xml.enabled false
+                html.enabled true
+                html.destination file("${buildDir}/reports/jacoco")
+                csv.enabled true
+                csv.destination file("${buildDir}/jacoco/report.csv")
+            }
+}
