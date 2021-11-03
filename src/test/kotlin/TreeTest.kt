@@ -1,12 +1,13 @@
-import binary_tree.Tree
+import concurrent_tree.ConcurrentTree
+import consistent_tree.ConsistentTree
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.Duration
 
 abstract class TreeTest {
-    lateinit var actualResult: Tree<Int, String>
-    lateinit var expectingResult: Tree<Int, String>
+    lateinit var actualResult: ConcurrentTree<Int, String>
+    lateinit var expectingResult: ConcurrentTree<Int, String>
 
 
     @Nested
@@ -296,4 +297,23 @@ abstract class TreeTest {
         }
 
     }
+    @Test
+    fun `tree methods should work correctly after lots of several calls`() {
+        val listOfElement = ArrayList<Pair<Int, String>>()
+        assertTimeout(Duration.ofSeconds(3L)) {
+            for (i in 1..10000) {
+                listOfElement.add(Pair(i, "a$i"))
+            }
+            for (element in listOfElement)
+                assertTrue(actualResult.insert(element.first, element.second))
+            for (element in listOfElement)
+                assertEquals(element.second, actualResult.search(element.first))
+
+            for (i in 1..10000) {
+                assertTrue(actualResult.remove(i))
+                assertNull(actualResult.search(i))
+            }
+        }
+    }
+
 }

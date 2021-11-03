@@ -1,11 +1,11 @@
-import binary_tree.Tree
+import consistent_tree.ConsistentTree
 import org.junit.jupiter.api.BeforeEach
 
 class ConsistentTreeTest : TreeTest() {
 
     @BeforeEach
     fun setup() {
-        actualResult = Tree()
-        expectingResult = Tree()
+        //actualResult = ConsistentTree()
+        //expectingResult = ConsistentTree()
     }
 }

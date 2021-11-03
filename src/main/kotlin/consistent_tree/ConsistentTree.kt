@@ -1,8 +1,8 @@
-package binary_tree
+package consistent_tree
 
-open class Tree<KeyT : Comparable<KeyT>, ValueT> {
+open class ConsistentTree<KeyT : Comparable<KeyT>, ValueT> {
 
-    private var root: Node<KeyT, ValueT>? = null
+    private var root: ConsistentNode<KeyT, ValueT>? = null
 
     fun search(key: KeyT): ValueT? {
         val temp = findNodeOrPotentialParent(key) ?: return null
@@ -38,8 +38,8 @@ open class Tree<KeyT : Comparable<KeyT>, ValueT> {
             0 -> removingNode.parent!!.whichChild(removingNode).set(null)
             1 -> {
                 val removingNodeChild = removingNode.leftChild ?: removingNode.rightChild
+                removingNodeChild!!.parent = removingNode.parent
                 removingNode.parent!!.whichChild(removingNode).set(removingNodeChild)
-                removingNodeChild!!.parent!!.whichChild(removingNodeChild).set(removingNode.parent)
             }
             2 -> {
                 val child = removingNode.rightChild!!
@@ -57,29 +57,29 @@ open class Tree<KeyT : Comparable<KeyT>, ValueT> {
 
     fun insert(key: KeyT, value: ValueT): Boolean {
         val temp = findNodeOrPotentialParent(key) ?: run {
-            root = Node(key, value)
+            root = ConsistentNode(key, value)
             return true
         }
 
         if (temp.key == key) return false
         else if (temp.key < key) {
-            temp.rightChild = Node(key, value)
+            temp.rightChild = ConsistentNode(key, value)
             temp.rightChild!!.parent = temp
         } else {
-            temp.leftChild = Node(key, value)
+            temp.leftChild = ConsistentNode(key, value)
             temp.leftChild!!.parent = temp
         }
         return true
     }
 
-    private fun insertNode(node: Node<KeyT, ValueT>): Boolean {
+    private fun insertNode(node: ConsistentNode<KeyT, ValueT>): Boolean {
         val temp = findNodeOrPotentialParent(node.key)!!
         node.parent = temp
         temp.rightChild = node
         return true
     }
 
-    private fun findNodeOrPotentialParent(key: KeyT): Node<KeyT, ValueT>? {
+    private fun findNodeOrPotentialParent(key: KeyT): ConsistentNode<KeyT, ValueT>? {
         var temp = root ?: return null
         var isNeededNode = temp.key.compareTo(key)
 
@@ -103,7 +103,7 @@ open class Tree<KeyT : Comparable<KeyT>, ValueT> {
                 treeTraversal(root, list)
             }
 
-            private fun treeTraversal(node: Node<KeyT, ValueT>?, list: ArrayList<Pair<KeyT, ValueT>>) {
+            private fun treeTraversal(node: ConsistentNode<KeyT, ValueT>?, list: ArrayList<Pair<KeyT, ValueT>>) {
                 if (node != null) {
                     treeTraversal(node.leftChild, list)
                     list.add(Pair(node.key, node.value))
@@ -124,7 +124,7 @@ open class Tree<KeyT : Comparable<KeyT>, ValueT> {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (this.javaClass != other?.javaClass) return false
-        val otherIterator = (other as Tree<*, *>).iterator()
+        val otherIterator = (other as ConsistentTree<*, *>).iterator()
         val iterator = this.iterator()
 
         while (otherIterator.hasNext() && iterator.hasNext()) {
@@ -138,7 +138,7 @@ open class Tree<KeyT : Comparable<KeyT>, ValueT> {
     }
 
     override fun hashCode(): Int {
-        fun calculateArrayStringRepresentation(node: Node<KeyT, ValueT>?, list: ArrayList<String>) {
+        fun calculateArrayStringRepresentation(node: ConsistentNode<KeyT, ValueT>?, list: ArrayList<String>) {
             if (node != null) {
                 list.add(node.key.toString() + node.value.toString())
                 calculateArrayStringRepresentation(node.leftChild, list)
