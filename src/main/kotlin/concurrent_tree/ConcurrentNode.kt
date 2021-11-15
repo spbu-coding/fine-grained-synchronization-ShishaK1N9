@@ -10,10 +10,6 @@ internal class ConcurrentNode<KeyT : Comparable<KeyT>, ValueT>(var key: KeyT, va
 
     var lck = ReentrantLock()
 
-    private fun ReentrantLock.fullUnlock() {
-        repeat(holdCount) { unlock() }
-    }
-
     internal fun lock() {
         lck.lock()
     }
@@ -30,8 +26,8 @@ internal class ConcurrentNode<KeyT : Comparable<KeyT>, ValueT>(var key: KeyT, va
         (leftChild?.let { 1 } ?: 0) + (rightChild?.let { 1 } ?: 0)
 
     internal fun lockFamily() {
-        parent?.lock()
         lock()
+        parent?.lock()
         leftChild?.lock()
         rightChild?.lock()
     }
@@ -41,5 +37,13 @@ internal class ConcurrentNode<KeyT : Comparable<KeyT>, ValueT>(var key: KeyT, va
         parent?.unlock()
         leftChild?.unlock()
         rightChild?.unlock()
+    }
+
+    internal fun moveToChild(moveTo: ConcurrentNode<KeyT, ValueT>, anotherChild: ConcurrentNode<KeyT, ValueT>?) {
+        moveTo.lockFamily()
+
+        parent?.unlock()
+        anotherChild?.let { this.whichChild(anotherChild).get()!!.unlock() }
+        unlock()
     }
 }

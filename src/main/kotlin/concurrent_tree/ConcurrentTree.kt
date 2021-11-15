@@ -108,19 +108,16 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> {
         if (temp.key == key) {
             temp.unlockFamily()
             return false
-        } else if (temp.key < key) {
-            val child = ConcurrentNode(key, value)
-            child.lock()
-            child.parent = temp
-            temp.rightChild = child
-
-            temp.unlockFamily()
         } else {
             val child = ConcurrentNode(key, value)
             child.lock()
             child.parent = temp
-            temp.leftChild = child
 
+            if (temp.key < key) {
+                temp.rightChild = child
+            } else {
+                temp.leftChild = child
+            }
             temp.unlockFamily()
         }
 
@@ -134,23 +131,20 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> {
         var isNeededNode = temp.key.compareTo(key)
 
         while (isNeededNode != 0) {
+            val leftChild = temp.leftChild
+            val rightChild = temp.rightChild
+
+            val child: ConcurrentNode<KeyT, ValueT>
             if (isNeededNode > 0) {
-                val child = temp.leftChild ?: return temp
-                child.lockFamily()
-                temp.parent?.unlock()
-                temp.rightChild?.unlock()
-                temp.unlock()
-                temp = child
-                temp.unlock()
+                child = leftChild ?: return temp
+                temp.moveToChild(child, rightChild)
             } else {
-                val child = temp.rightChild ?: return temp
-                child.lockFamily()
-                temp.parent?.unlock()
-                temp.leftChild?.unlock()
-                temp.unlock()
-                temp = child
-                temp.unlock()
+                child = rightChild ?: return temp
+                temp.moveToChild(child, leftChild)
             }
+            temp = child
+            temp.unlock()
+
             isNeededNode = temp.key.compareTo(key)
         }
         return temp
