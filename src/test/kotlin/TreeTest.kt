@@ -306,6 +306,7 @@ abstract class TreeTest {
             }
             for (element in listOfElement)
                 assertTrue(actualResult.insert(element.first, element.second))
+            //actualResult.checkLocks()
             for (element in listOfElement)
                 assertEquals(element.second, actualResult.search(element.first))
 

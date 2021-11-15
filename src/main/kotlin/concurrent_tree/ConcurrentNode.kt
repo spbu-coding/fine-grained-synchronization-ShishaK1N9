@@ -19,7 +19,7 @@ internal class ConcurrentNode<KeyT : Comparable<KeyT>, ValueT>(var key: KeyT, va
     }
 
     internal fun unlock() {
-        lck.fullUnlock()
+        lck.unlock()
     }
 
     internal fun whichChild(node: ConcurrentNode<KeyT, ValueT>) =
@@ -31,29 +31,15 @@ internal class ConcurrentNode<KeyT : Comparable<KeyT>, ValueT>(var key: KeyT, va
 
     internal fun lockFamily() {
         parent?.lock()
+        lock()
         leftChild?.lock()
         rightChild?.lock()
-        lock()
     }
 
     internal fun unlockFamily() {
-        parent?.unlock()
-        leftChild?.unlock()
-        rightChild?.unlock()
         unlock()
-    }
-
-    internal fun moveLeftDown() {
-        parent?.unlock()
-        rightChild?.unlock()
-        leftChild?.rightChild?.lock()
-        leftChild?.leftChild?.lock()
-    }
-
-    internal fun moveRightDown() {
         parent?.unlock()
         leftChild?.unlock()
-        rightChild?.rightChild?.lock()
-        rightChild?.leftChild?.lock()
+        rightChild?.unlock()
     }
 }
