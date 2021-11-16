@@ -3,11 +3,12 @@ import consistent_tree.ConsistentTree
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import utils.ITree
 import java.time.Duration
 
 abstract class TreeTest {
-    lateinit var actualResult: ConcurrentTree<Int, String>
-    lateinit var expectingResult: ConcurrentTree<Int, String>
+    lateinit var actualResult: ITree<Int, String>
+    lateinit var expectingResult: ITree<Int, String>
 
 
     @Nested
@@ -18,10 +19,7 @@ abstract class TreeTest {
             val value = "I am root!"
 
             assertTrue(actualResult.insert(key, value))
-            actualResult.iterator().forEach {
-                assertTrue(it.first == key)
-                assertTrue(it.second == value)
-            }
+            assertEquals(actualResult.search(key), value)
         }
 
         @Test
@@ -232,7 +230,7 @@ abstract class TreeTest {
     }
 
     @Nested
-    inner class EqulasTests {
+    inner class EqualsTests {
         @Test
         fun `same trees should be equals`() {
             actualResult.insert(1, "a")
@@ -297,7 +295,9 @@ abstract class TreeTest {
         }
 
     }
-    @Test
+
+
+/*    @Test
     fun `tree methods should work correctly after lots of several calls`() {
         val listOfElement = ArrayList<Pair<Int, String>>()
         assertTimeout(Duration.ofSeconds(3L)) {
@@ -315,6 +315,6 @@ abstract class TreeTest {
                 assertNull(actualResult.search(i))
             }
         }
-    }
+    }*/
 
 }

@@ -1,15 +1,17 @@
 package consistent_tree
 
-open class ConsistentTree<KeyT : Comparable<KeyT>, ValueT> {
+import utils.ITree
+
+open class ConsistentTree<KeyT : Comparable<KeyT>, ValueT>: ITree<KeyT, ValueT> {
 
     private var root: ConsistentNode<KeyT, ValueT>? = null
 
-    fun search(key: KeyT): ValueT? {
+    override fun search(key: KeyT): ValueT? {
         val temp = findNodeOrPotentialParent(key) ?: return null
         return if (temp.key == key) temp.value else null
     }
 
-    fun remove(key: KeyT): Boolean {
+    override fun remove(key: KeyT): Boolean {
         val removingNode = findNodeOrPotentialParent(key) ?: return false
 
         if (removingNode.key != key) return false
@@ -55,7 +57,7 @@ open class ConsistentTree<KeyT : Comparable<KeyT>, ValueT> {
         return true
     }
 
-    fun insert(key: KeyT, value: ValueT): Boolean {
+    override fun insert(key: KeyT, value: ValueT): Boolean {
         val temp = findNodeOrPotentialParent(key) ?: run {
             root = ConsistentNode(key, value)
             return true

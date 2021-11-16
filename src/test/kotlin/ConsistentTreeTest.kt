@@ -5,7 +5,7 @@ class ConsistentTreeTest : TreeTest() {
 
     @BeforeEach
     fun setup() {
-        //actualResult = ConsistentTree()
-        //expectingResult = ConsistentTree()
+        actualResult = ConsistentTree()
+        expectingResult = ConsistentTree()
     }
 }
