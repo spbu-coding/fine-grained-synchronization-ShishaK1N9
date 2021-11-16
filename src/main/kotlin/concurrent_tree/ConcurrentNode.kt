@@ -28,22 +28,29 @@ internal class ConcurrentNode<KeyT : Comparable<KeyT>, ValueT>(var key: KeyT, va
     internal fun lockFamily() {
         lock()
         parent?.lock()
-        leftChild?.lock()
-        rightChild?.lock()
     }
 
     internal fun unlockFamily() {
         unlock()
         parent?.unlock()
-        leftChild?.unlock()
-        rightChild?.unlock()
     }
 
-    internal fun moveToChild(moveTo: ConcurrentNode<KeyT, ValueT>, anotherChild: ConcurrentNode<KeyT, ValueT>?) {
+    internal fun moveToChild(moveTo: ConcurrentNode<KeyT, ValueT>) {
         moveTo.lockFamily()
-
         parent?.unlock()
-        anotherChild?.let { this.whichChild(anotherChild).get()!!.unlock() }
         unlock()
+    }
+
+    internal fun moveToRightmost(): ConcurrentNode<KeyT, ValueT> {
+        var temp: ConcurrentNode<KeyT, ValueT> = this
+        while(temp.rightChild != null) {
+            temp.rightChild?.let {
+                it.lockFamily()
+                temp.unlockFamily()
+                temp = it
+            }
+        }
+
+        return temp
     }
 }

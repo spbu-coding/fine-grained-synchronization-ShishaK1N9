@@ -3,10 +3,9 @@ package concurrent_tree
 import utils.ITree
 import java.util.concurrent.locks.ReentrantLock
 
-open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT>: ITree<KeyT, ValueT> {
+open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT> {
 
     private var root: ConcurrentNode<KeyT, ValueT>? = null
-
     private var lck = ReentrantLock()
 
     fun checkLocks() {
@@ -49,9 +48,12 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT>: ITree<KeyT, ValueT> 
 
                     root!!.leftChild!!.parent = null
                     root = root!!.leftChild
-                    root!!.unlock()
 
-                    insertNode(child)
+                    root!!.lockFamily()
+                    val rightmostChild = root!!.moveToRightmost()
+
+                    rightmostChild.insertNode(child)
+                    rightmostChild.unlockFamily()
                     child.rightChild?.unlock()
                     child.leftChild?.unlock()
                 }
@@ -59,6 +61,7 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT>: ITree<KeyT, ValueT> 
             lck.unlock()
             return true
         }
+        lck.unlock()
 
         when (removingNode.countOfChildren()) {
             0 -> {
@@ -76,30 +79,34 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT>: ITree<KeyT, ValueT> 
             }
             2 -> {
                 val child = removingNode.rightChild!!
-                child.parent = null
+                val parent = removingNode.parent!!
+
                 child.lockFamily()
+                child.parent = null
 
-                removingNode.leftChild!!.parent = removingNode.parent
-                removingNode.parent!!.whichChild(removingNode).set(removingNode.leftChild)
-                removingNode.parent!!.whichChild(removingNode.leftChild!!).get()!!.unlock()
-                removingNode.parent!!.unlock()
+                removingNode.leftChild!!.parent = parent
+                parent.whichChild(removingNode).set(removingNode.leftChild)
 
-                insertNode(child)
+                val newNode = parent.whichChild(removingNode.leftChild!!).get()!!
+                newNode.rightChild?.lock()
+                newNode.leftChild?.lock()
+
+                val temp = newNode.moveToRightmost()
+
+                temp.insertNode(child)
                 child.unlock()
+                child.rightChild?.unlock()
+                child.leftChild?.unlock()
             }
         }
 
-        lck.unlock()
         return true
     }
 
-    private fun insertNode(node: ConcurrentNode<KeyT, ValueT>): Boolean {
-        val temp = findNodeOrPotentialParent(node.key)!!
-        node.parent = temp
-        if(node.key > temp.key) temp.rightChild = node
-        else temp.leftChild = node
-        temp.unlockFamily()
-        return true
+    private fun ConcurrentNode<KeyT, ValueT>.insertNode(node: ConcurrentNode<KeyT, ValueT>) {
+        node.parent = this
+        this.rightChild = node
+        this.unlockFamily()
     }
 
     override fun insert(key: KeyT, value: ValueT): Boolean {
@@ -116,14 +123,11 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT>: ITree<KeyT, ValueT> 
             return false
         } else {
             val child = ConcurrentNode(key, value)
-            child.lock()
             child.parent = temp
 
-            if (temp.key < key) {
-                temp.rightChild = child
-            } else {
-                temp.leftChild = child
-            }
+            if (temp.key < key) temp.rightChild = child
+            else temp.leftChild = child
+
             temp.unlockFamily()
         }
 
@@ -143,13 +147,12 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT>: ITree<KeyT, ValueT> 
             val child: ConcurrentNode<KeyT, ValueT>
             if (isNeededNode > 0) {
                 child = leftChild ?: return temp
-                temp.moveToChild(child, rightChild)
+                temp.moveToChild(child)
             } else {
                 child = rightChild ?: return temp
-                temp.moveToChild(child, leftChild)
+                temp.moveToChild(child)
             }
             temp = child
-            temp.unlock()
 
             isNeededNode = temp.key.compareTo(key)
         }
