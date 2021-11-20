@@ -2,7 +2,7 @@ package consistent_tree
 
 import utils.ITree
 
-open class ConsistentTree<KeyT : Comparable<KeyT>, ValueT>: ITree<KeyT, ValueT> {
+open class ConsistentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT> {
 
     private var root: ConsistentNode<KeyT, ValueT>? = null
 
@@ -64,13 +64,9 @@ open class ConsistentTree<KeyT : Comparable<KeyT>, ValueT>: ITree<KeyT, ValueT> 
         }
 
         if (temp.key == key) return false
-        else if (temp.key < key) {
-            temp.rightChild = ConsistentNode(key, value)
-            temp.rightChild!!.parent = temp
-        } else {
-            temp.leftChild = ConsistentNode(key, value)
-            temp.leftChild!!.parent = temp
-        }
+        else if (temp.key < key) temp.rightChild = ConsistentNode(key, value, temp)
+        else temp.leftChild = ConsistentNode(key, value, temp)
+
         return true
     }
 
@@ -81,6 +77,11 @@ open class ConsistentTree<KeyT : Comparable<KeyT>, ValueT>: ITree<KeyT, ValueT> 
         return true
     }
 
+    /**
+     * Finds potential parent of node key.
+     * @param key key of searching node.
+     * @return node, which can be a parent of node - if it doesn't exist, node with [key] - if it exists, *null* - if tree is empty.
+     */
     private fun findNodeOrPotentialParent(key: KeyT): ConsistentNode<KeyT, ValueT>? {
         var temp = root ?: return null
         var isNeededNode = temp.key.compareTo(key)

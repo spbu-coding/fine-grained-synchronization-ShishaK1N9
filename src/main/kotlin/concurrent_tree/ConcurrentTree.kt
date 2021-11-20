@@ -3,9 +3,16 @@ package concurrent_tree
 import utils.ITree
 import java.util.concurrent.locks.ReentrantLock
 
+/**
+ * Concurrent tree implementation.
+ */
 open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT> {
 
     private var root: ConcurrentNode<KeyT, ValueT>? = null
+
+    /**
+     * Global tree lock. Uses if program works with root.
+     */
     private var lck = ReentrantLock()
 
     fun checkLocks() {
@@ -31,82 +38,80 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
         }
 
         lck.lock()
-        if (removingNode == root) {
-            when (root!!.countOfChildren()) {
-                0 -> {
-                    root = null
-                }
+        root?.let {
+            if (removingNode != it) return@let
+
+            it.lock()
+            when (it.countOfChildren()) {
+                0 -> root = null
                 1 -> {
-                    root = root!!.leftChild ?: root!!.rightChild
-                    root!!.parent = null
-                    root!!.unlock()
+                    it.leftChild?.lock()
+                    it.rightChild?.lock()
+
+                    root = it.leftChild ?: it.rightChild!!
+                    it.parent = null
+
+                    it.unlock()
                 }
                 2 -> {
-                    val child = root!!.rightChild!!
-                    child.lockFamily()
-                    child.parent = null
+                    val rightChild = it.rightChild!!
+                    val leftChild = it.leftChild!!
 
-                    root!!.leftChild!!.parent = null
-                    root = root!!.leftChild
+                    rightChild.lockFamily()
+                    rightChild.parent = null
 
-                    root!!.lockFamily()
+                    leftChild.lock()
+                    leftChild.parent = null
+                    root = leftChild
+
                     val rightmostChild = root!!.moveToRightmost()
 
-                    rightmostChild.insertNode(child)
-                    rightmostChild.unlockFamily()
-                    child.rightChild?.unlock()
-                    child.leftChild?.unlock()
+                    rightmostChild.insertNode(rightChild)
+                    rightChild.unlock()
                 }
             }
             lck.unlock()
             return true
         }
+
         lck.unlock()
 
         when (removingNode.countOfChildren()) {
             0 -> {
-                val parent = removingNode.parent
-                parent!!.whichChild(removingNode).set(null)
+                val parent = removingNode.parent!!
+                parent.whichChild(removingNode).set(null)
                 parent.unlock()
             }
             1 -> {
-                val removingNodeChild = removingNode.leftChild ?: removingNode.rightChild
-                removingNodeChild!!.parent = removingNode.parent
-                val parent = removingNode.parent
-                parent!!.whichChild(removingNode).set(removingNodeChild)
-                parent.unlock()
-                removingNodeChild.unlock()
+                val child = removingNode.leftChild ?: removingNode.rightChild!!
+                child.lock()
+
+                val parent = removingNode.parent!!
+                child.parent = parent
+                parent.whichChild(removingNode).set(child)
+
+                child.unlockFamily()
             }
             2 -> {
-                val child = removingNode.rightChild!!
+                val rightChild = removingNode.rightChild!!
+                val leftChild = removingNode.leftChild!!
                 val parent = removingNode.parent!!
 
-                child.lockFamily()
-                child.parent = null
+                rightChild.lockFamily()
+                rightChild.parent = null
 
-                removingNode.leftChild!!.parent = parent
-                parent.whichChild(removingNode).set(removingNode.leftChild)
+                leftChild.lock()
+                leftChild.parent = parent
+                parent.whichChild(removingNode).set(leftChild)
 
-                val newNode = parent.whichChild(removingNode.leftChild!!).get()!!
-                newNode.rightChild?.lock()
-                newNode.leftChild?.lock()
+                val rightmostChild = parent.whichChild(leftChild).get()!!.moveToRightmost()
 
-                val temp = newNode.moveToRightmost()
-
-                temp.insertNode(child)
-                child.unlock()
-                child.rightChild?.unlock()
-                child.leftChild?.unlock()
+                rightmostChild.insertNode(rightChild)
+                rightChild.unlock()
             }
         }
 
         return true
-    }
-
-    private fun ConcurrentNode<KeyT, ValueT>.insertNode(node: ConcurrentNode<KeyT, ValueT>) {
-        node.parent = this
-        this.rightChild = node
-        this.unlockFamily()
     }
 
     override fun insert(key: KeyT, value: ValueT): Boolean {
@@ -122,8 +127,7 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
             temp.unlockFamily()
             return false
         } else {
-            val child = ConcurrentNode(key, value)
-            child.parent = temp
+            val child = ConcurrentNode(key, value, temp)
 
             if (temp.key < key) temp.rightChild = child
             else temp.leftChild = child
@@ -134,6 +138,11 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
         return true
     }
 
+    /**
+     * Finds potential parent of node key.
+     * @param key key of searching node.
+     * @return node, which can be a parent of node - if it doesn't exist, node with [key] - if it exists, *null* - if tree is empty.
+     */
     private fun findNodeOrPotentialParent(key: KeyT): ConcurrentNode<KeyT, ValueT>? {
         var temp = root ?: return null
         temp.lockFamily()
