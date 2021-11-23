@@ -1,10 +1,8 @@
-import concurrent_tree.ConcurrentTree
-import consistent_tree.ConsistentTree
+import utils.ITree
+
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import utils.ITree
-import java.time.Duration
 
 abstract class TreeTest {
     lateinit var actualResult: ITree<Int, String>
@@ -306,6 +304,5 @@ abstract class TreeTest {
 
             assertNotEquals(expectingResult, actualResult)
         }
-
     }
 }
