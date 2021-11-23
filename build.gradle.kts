@@ -15,6 +15,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
     testImplementation(platform("org.junit:junit-bom:5.7.1"))
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.4.21")
+    implementation("org.jetbrains.kotlinx:lincheck:2.14.1")
 }
 
 tasks.test {
