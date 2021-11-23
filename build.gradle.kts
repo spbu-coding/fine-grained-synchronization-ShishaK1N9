@@ -22,6 +22,10 @@ tasks.test {
     finalizedBy(tasks.jacocoTestReport)
     useJUnitPlatform()
     maxHeapSize = "2G"
+    jvmArgs(
+        "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",
+        "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED"
+    )
 }
 
 tasks.jacocoTestReport {
@@ -33,3 +37,14 @@ tasks.jacocoTestReport {
         html.outputLocation.set(file("${buildDir}/reports/jacoco"))
     }
 }
+
+/*
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs = listOf(
+            "--add-opens java.base/jdk.internal.misc=ALL-UNNAMED",
+            "--add-exports java.base/jdk.internal.util=ALL-UNNAMED"
+        )
+        jvmTarget = "11"
+    }
+}*/
