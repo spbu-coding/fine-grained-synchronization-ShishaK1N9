@@ -1,78 +1,46 @@
 import concurrent_tree.ConcurrentTree
-import consistent_tree.ConsistentTree
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.RepeatedTest
+
+import org.jetbrains.kotlinx.lincheck.LinChecker
+import org.jetbrains.kotlinx.lincheck.annotations.Operation
+import org.jetbrains.kotlinx.lincheck.annotations.Param
+import org.jetbrains.kotlinx.lincheck.check
+import org.jetbrains.kotlinx.lincheck.paramgen.IntGen
+import org.jetbrains.kotlinx.lincheck.strategy.stress.StressCTest
+import org.jetbrains.kotlinx.lincheck.strategy.stress.StressOptions
+import org.jetbrains.kotlinx.lincheck.verifier.VerifierState
 import org.junit.jupiter.api.Test
-import kotlin.concurrent.thread
 
-class ConcurrentTreeTest : TreeTest() {
+@Param.Params(
+    Param(name = "key", gen = IntGen::class, conf = "-10:10"),
+    Param(name = "value", gen = IntGen::class, conf = "-10:10")
+)
+@StressCTest(
+    actorsBefore = 2,
+    threads = 3, actorsPerThread = 3,
+    actorsAfter = 0,
+    minimizeFailedScenario = false
+)
+class ConcurrentTreeTest : VerifierState() {
 
-    lateinit var threads: MutableList<Thread>
-    lateinit var threads2: MutableList<Thread>
+    private val tree = ConcurrentTree<Int, Int>()
 
-    @BeforeEach
-    fun setup() {
-        actualResult = ConcurrentTree()
-        expectingResult = ConcurrentTree()
-        threads = mutableListOf()
-        threads2 = mutableListOf()
-    }
+    @Operation
+    fun search(@Param(name = "key") key: Int) = tree.search(key)
 
-    @RepeatedTest(100)
-    fun test() {
-        for(i in 1..20) {
-            val task = thread {
-                for(j in 1..10) {
-                    actualResult.insert(i * 1000 + j, "${i * 1000 + j}")
-                }
-            }
-            threads.add(task)
+    @Operation
+    fun insert(@Param(name = "key") key: Int, @Param(name = "value") value: Int) = tree.insert(key, value)
+
+    @Operation
+    fun remove(@Param(name = "key") key: Int) = tree.remove(key)
+
+    @Test
+    fun stressTest() = LinChecker.check(this::class.java)
+
+    override fun extractState(): Any {
+        val elements = mutableListOf<Pair<Int, Int>>()
+        tree.iterator().forEach {
+            elements.add(it)
         }
-
-        threads.forEach {
-            it.join()
-        }
-
-        for(i in 1..20) {
-            for(j in 1..10) {
-                assertEquals("${i * 1000 + j}", actualResult.search(i * 1000 + j))
-            }
-        }
-    }
-
-    @RepeatedTest(10)
-    fun test2() {
-        /*for(i in 1..4) {
-            val task = thread {
-                for(j in 1..10) {
-                    actualResult.insert(i * 1000 + j, "${i * 1000 + j}")
-                }
-            }
-            threads.add(task)
-        }
-
-        threads.forEach {
-            it.join()
-        }*/
-
-        for(i in 1..4) {
-            val task = thread {
-                for(j in 1..10) {
-                    assertFalse(actualResult.remove(i * 1000 + j))
-                }
-            }
-            threads2.add(task)
-        }
-
-        threads2.forEach {
-            it.join()
-        }
-
-        for(i in 1..4) {
-            for(j in 1..10) {
-                assertNull(actualResult.search(i * 1000 + j))
-            }
-        }
+        return tree
     }
 }
