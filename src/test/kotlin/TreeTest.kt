@@ -38,6 +38,8 @@ abstract class TreeTest {
 
             assertTrue(actualResult.insert(key1, value1))
             assertTrue(actualResult.insert(key2, value2))
+
+            assertEquals(actualResult.search(key2), value2)
         }
 
         @Test
@@ -47,6 +49,8 @@ abstract class TreeTest {
 
             assertTrue(actualResult.insert(key1, value1))
             assertTrue(actualResult.insert(key2, value2))
+
+            assertEquals(actualResult.search(key2), value2)
         }
     }
 
@@ -80,6 +84,7 @@ abstract class TreeTest {
                 actualResult.insert(key, value)
 
                 assertTrue(actualResult.remove(key))
+                assertNull(actualResult.search(key))
             }
 
             @Test
@@ -91,6 +96,7 @@ abstract class TreeTest {
                 actualResult.insert(key2, value2)
 
                 assertTrue(actualResult.remove(key1))
+                assertNull(actualResult.search(key1))
             }
 
             @Test
@@ -102,6 +108,7 @@ abstract class TreeTest {
                 actualResult.insert(key2, value2)
 
                 assertTrue(actualResult.remove(key1))
+                assertNull(actualResult.search(key1))
             }
 
             @Test
@@ -114,6 +121,7 @@ abstract class TreeTest {
                 actualResult.insert(key3, value3)
 
                 assertTrue(actualResult.remove(key1))
+                assertNull(actualResult.search(key1))
             }
         }
 
@@ -128,6 +136,7 @@ abstract class TreeTest {
                 actualResult.insert(key, value)
 
                 assertTrue(actualResult.remove(key))
+                assertNull(actualResult.search(key))
             }
 
             @Test
@@ -139,6 +148,7 @@ abstract class TreeTest {
                 actualResult.insert(key, value)
 
                 assertTrue(actualResult.remove(key))
+                assertNull(actualResult.search(key))
             }
 
             @Test
@@ -151,6 +161,7 @@ abstract class TreeTest {
                 actualResult.insert(key2, value2)
 
                 assertTrue(actualResult.remove(key1))
+                assertNull(actualResult.search(key1))
             }
 
             @Test
@@ -163,6 +174,7 @@ abstract class TreeTest {
                 actualResult.insert(key2, value2)
 
                 assertTrue(actualResult.remove(key1))
+                assertNull(actualResult.search(key1))
             }
 
             @Test
@@ -177,6 +189,7 @@ abstract class TreeTest {
                 actualResult.insert(key3, value3)
 
                 assertTrue(actualResult.remove(key1))
+                assertNull(actualResult.search(key1))
             }
         }
     }
@@ -295,26 +308,4 @@ abstract class TreeTest {
         }
 
     }
-
-
-/*    @Test
-    fun `tree methods should work correctly after lots of several calls`() {
-        val listOfElement = ArrayList<Pair<Int, String>>()
-        assertTimeout(Duration.ofSeconds(3L)) {
-            for (i in 1..10000) {
-                listOfElement.add(Pair(i, "a$i"))
-            }
-            for (element in listOfElement)
-                assertTrue(actualResult.insert(element.first, element.second))
-            //actualResult.checkLocks()
-            for (element in listOfElement)
-                assertEquals(element.second, actualResult.search(element.first))
-
-            for (i in 1..10000) {
-                assertTrue(actualResult.remove(i))
-                assertNull(actualResult.search(i))
-            }
-        }
-    }*/
-
 }
