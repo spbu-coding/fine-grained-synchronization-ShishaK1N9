@@ -1,6 +1,7 @@
 package concurrent_tree
 
 import utils.ITree
+
 import java.util.concurrent.locks.ReentrantLock
 
 /**
@@ -13,84 +14,68 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
     /**
      * Global tree lock. Uses if program works with root.
      */
-    var lck = ReentrantLock()
+    private var lck = ReentrantLock()
 
-    fun checkLocks() {
-        var i = 0
-        iterator().forEach { _ ->
-            i++
-        }
-    }
+    /**
+     * Locks global tree [lck].
+     */
+    private fun lock() = lck.lock()
+
+    /**
+     * Unlocks global tree [lck].
+     */
+    private fun unlock() = lck.unlock()
 
     override fun search(key: KeyT): ValueT? {
-        lck.lock()
         val temp = findNodeOrPotentialParent(key) ?: run {
-            lck.unlock()
+            unlock()
             return null
         }
+
         val value = if (temp.key == key) temp.value else null
-        if (temp == root) lck.unlock()
+
+        temp.unlockTreeIfRoot()
         temp.unlockFamily()
+
         return value
     }
 
     override fun remove(key: KeyT): Boolean {
-        lck.lock()
         val removingNode = findNodeOrPotentialParent(key) ?: run {
-            lck.unlock()
+            unlock()
             return false
         }
 
         if (removingNode.key != key) {
-            if (removingNode == root) lck.unlock()
+            removingNode.unlockTreeIfRoot()
             removingNode.unlockFamily()
             return false
         }
 
-        root.let {
-            if (removingNode != it) return@let
-            when (it.countOfChildren()) {
-                0 -> root = null
-                1 -> {
-                    it.leftChild?.lock()
-                    it.rightChild?.lock()
+        removeNode(removingNode)
+        return true
+    }
 
-                    root = it.leftChild ?: it.rightChild!!
-                    root!!.parent = null
-
-                    root!!.unlock()
-                }
-                2 -> {
-                    val rightChild = it.rightChild!!
-                    val leftChild = it.leftChild!!
-
-                    rightChild.lock()
-                    rightChild.parent = null
-
-                    leftChild.lock()
-                    leftChild.parent = null
-                    root = leftChild
-
-                    val rightmostChild = root!!.moveToRightmost()
-
-                    rightmostChild.insertNode(rightChild)
-                    rightChild.unlock()
-                }
-            }
-            lck.unlock()
-            return true
-        }
-
-        val parent = removingNode.parent!!
+    /**
+     * Removes node which is not [root].
+     * @param [removingNode] removing node which is not root.
+     * @param [parent] removing node parent.
+     * @param [leftChild] removing node left child, *null* - if it doesn't exist.
+     * @param [rightChild] removing node right child, *null* - if it doesn't exist.
+     */
+    private fun removeNotRoot(
+        removingNode: ConcurrentNode<KeyT, ValueT>,
+        parent: ConcurrentNode<KeyT, ValueT>,
+        leftChild: ConcurrentNode<KeyT, ValueT>?,
+        rightChild: ConcurrentNode<KeyT, ValueT>?
+    ) {
         when (removingNode.countOfChildren()) {
-
             0 -> {
                 parent.whichChild(removingNode).set(null)
                 parent.unlock()
             }
             1 -> {
-                val child = removingNode.leftChild ?: removingNode.rightChild!!
-                child.lock()
+                val child = leftChild ?: rightChild!!
 
                 child.parent = parent
                 parent.whichChild(removingNode).set(child)
@@ -98,40 +83,72 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
                 child.unlockFamily()
             }
             2 -> {
-                val rightChild = removingNode.rightChild!!
-                val leftChild = removingNode.leftChild!!
+                rightChild!!.parent = null
+                leftChild!!.parent = parent
 
-                rightChild.lockFamily()
-                rightChild.parent = null
-
-                leftChild.lock()
-                leftChild.parent = parent
                 parent.whichChild(removingNode).set(leftChild)
 
-                val rightmostChild = parent.whichChild(leftChild).get()!!.moveToRightmost()
+                val rightmostChild = parent.whichChild(leftChild).get()!!.rightmostNode()
 
                 rightmostChild.insertNode(rightChild)
                 rightChild.unlock()
             }
         }
+    }
 
-        return true
+    /**
+     * Removes tree [root].
+     */
+    private fun removeRoot(leftChild: ConcurrentNode<KeyT, ValueT>?, rightChild: ConcurrentNode<KeyT, ValueT>?) {
+        root?.let {
+            when (it.countOfChildren()) {
+                0 -> root = null
+                1 -> {
+                    root = it.leftChild ?: it.rightChild!!
+                    root!!.parent = null
+
+                    root!!.unlock()
+                }
+                2 -> {
+                    rightChild!!.parent = null
+                    leftChild!!.parent = null
+
+                    root = leftChild
+
+                    root!!.rightmostNode().insertNode(rightChild)
+                    rightChild.unlock()
+                }
+            }
+            unlock()
+        }
+    }
+
+    private fun removeNode(removingNode: ConcurrentNode<KeyT, ValueT>) {
+        removingNode.lockChildren()
+
+        val leftChild = removingNode.leftChild
+        val rightChild = removingNode.rightChild
+
+        if (removingNode == root) {
+            removeRoot(leftChild, rightChild)
+        } else {
+            val parent = removingNode.parent!!
+            removeNotRoot(removingNode, parent, leftChild, rightChild)
+        }
     }
 
     override fun insert(key: KeyT, value: ValueT): Boolean {
-        lck.lock()
         val temp = findNodeOrPotentialParent(key) ?: run {
             root = ConcurrentNode(key, value)
-            lck.unlock()
+            unlock()
             return true
         }
 
+        temp.unlockTreeIfRoot()
         if (temp.key == key) {
-            if (temp == root) lck.unlock()
             temp.unlockFamily()
             return false
         } else {
-            if (temp == root) lck.unlock()
             val child = ConcurrentNode(key, value, temp)
 
             if (temp.key < key) temp.rightChild = child
@@ -145,14 +162,14 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
 
     /**
      * Finds potential parent of node key.
-     * @param key key of searching node.
+     * @param [key] key of searching node.
      * @return node, which can be a parent of node - if it doesn't exist, node with [key] - if it exists, *null* - if tree is empty.
      */
     private fun findNodeOrPotentialParent(key: KeyT): ConcurrentNode<KeyT, ValueT>? {
+        lock()
         root?.lock()
         var temp = root ?: return null
         var isNeededNode = temp.key.compareTo(key)
-        var isRoot = true
 
         while (isNeededNode != 0) {
             val leftChild = temp.leftChild
@@ -162,23 +179,23 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
             if (isNeededNode > 0) {
                 child = leftChild ?: return temp
                 temp.moveToChild(child)
-                if (isRoot) {
-                    isRoot = false
-                    lck.unlock()
-                }
             } else {
                 child = rightChild ?: return temp
                 temp.moveToChild(child)
-                if (isRoot) {
-                    isRoot = false
-                    lck.unlock()
-                }
             }
+            temp.unlockTreeIfRoot()
             temp = child
 
             isNeededNode = temp.key.compareTo(key)
         }
         return temp
+    }
+
+    /**
+     * Unlocks global tree lock, if node is [root].
+     */
+    private fun ConcurrentNode<KeyT, ValueT>.unlockTreeIfRoot() {
+        if (this == root) this@ConcurrentTree.unlock()
     }
 
     fun iterator(): Iterator<Pair<KeyT, ValueT>> {
@@ -191,7 +208,6 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
             }
 
             private fun treeTraversal(node: ConcurrentNode<KeyT, ValueT>?, list: ArrayList<Pair<KeyT, ValueT>>) {
-                //println(node?.lck?.isLocked)
                 if (node != null) {
                     treeTraversal(node.leftChild, list)
                     list.add(Pair(node.key, node.value))
