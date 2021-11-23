@@ -4,9 +4,9 @@ import java.util.concurrent.locks.ReentrantLock
 
 /**
  * Concurrent node implementation.
- * @property key node key
- * @property value node value
- * @property parent node parent (default value is *null*)
+ * @property [key] node key
+ * @property [value] node value
+ * @property [parent] node parent (default value is *null*)
  */
 open class ConcurrentNode<KeyT : Comparable<KeyT>, ValueT>(
     var key: KeyT,
@@ -50,19 +50,28 @@ open class ConcurrentNode<KeyT : Comparable<KeyT>, ValueT>(
     }
 
     /**
-     * Carefully unlocks node parent and locks node needed child.
-     * @param moveTo needed child
+     * Locks node children.
      */
-    fun moveToChild(moveTo: ConcurrentNode<KeyT, ValueT>) {
-        moveTo.lockFamily()
+    fun lockChildren() {
+        leftChild?.lock()
+        rightChild?.lock()
+    }
+
+    /**
+     * Carefully unlocks node parent and locks node needed child.
+     * @param [child] needed child
+     */
+    fun moveToChild(child: ConcurrentNode<KeyT, ValueT>) {
+        child.lockFamily()
         parent?.unlock()
         unlock()
     }
 
     /**
      * Carefully moves to rightmost child.
+     * @return rightmost node in the subtree with current node as a root.
      */
-    fun moveToRightmost(): ConcurrentNode<KeyT, ValueT> {
+    fun rightmostNode(): ConcurrentNode<KeyT, ValueT> {
         var temp: ConcurrentNode<KeyT, ValueT> = this
         while (temp.rightChild != null) {
             temp.rightChild?.let {
@@ -77,7 +86,7 @@ open class ConcurrentNode<KeyT : Comparable<KeyT>, ValueT>(
 
     /**
      * Inserts node to a subtree with current node as a root.
-     * @param node subtree root.
+     * @param [node] subtree root.
      */
     fun insertNode(node: ConcurrentNode<KeyT, ValueT>) {
         node.parent = this
@@ -87,7 +96,7 @@ open class ConcurrentNode<KeyT : Comparable<KeyT>, ValueT>(
 
     /**
      * Detects which child the node is.
-     * @param node child which needed to be identified.
+     * @param [node] child which needed to be identified.
      * @return [leftChild] link - if [node] is [leftChild], [rightChild] link - if node is [rightChild].
      */
     fun whichChild(node: ConcurrentNode<KeyT, ValueT>) =
