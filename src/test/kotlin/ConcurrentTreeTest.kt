@@ -55,7 +55,7 @@ class ConcurrentTreeTest : VerifierState() {
      * Stress test, which runs on 3 threads.
      */
     @Test
-    fun stressTestOn3Thread() = StressOptions()
+    fun stressTestOn3Threads() = StressOptions()
         .actorsBefore(1)
         .threads(3).actorsPerThread(3)
         .minimizeFailedScenario(false)
