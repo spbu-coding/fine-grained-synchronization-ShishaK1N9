@@ -1,6 +1,7 @@
 package consistent_tree
 
 import utils.ITree
+import java.security.Key
 
 open class ConsistentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT> {
 
@@ -125,41 +126,25 @@ open class ConsistentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
     }
 
     override fun equals(other: Any?): Boolean {
+        if (other !is ConsistentTree<*, *>) return false
         if (this === other) return true
-        if (this.javaClass != other?.javaClass) return false
-        val otherIterator = (other as ConsistentTree<*, *>).iterator()
-        val iterator = this.iterator()
-
-        while (otherIterator.hasNext() && iterator.hasNext()) {
-            val node = iterator.next()
-            val otherNode = otherIterator.next()
-            if (node.first != otherNode.first || node.second != otherNode.second)
-                return false
+        val (thisElements, otherElements) =
+            arrayOf(mutableListOf<Pair<*, *>>(), mutableListOf())
+        this.iterator().forEach {
+            thisElements.add(it)
         }
-
-        return !(otherIterator.hasNext() || iterator.hasNext())
+        (other).iterator().forEach {
+            otherElements.add(it)
+        }
+        return thisElements == otherElements
     }
 
     override fun hashCode(): Int {
-        fun calculateArrayStringRepresentation(node: ConsistentNode<KeyT, ValueT>?, list: ArrayList<String>) {
-            if (node != null) {
-                list.add(node.key.toString() + node.value.toString())
-                calculateArrayStringRepresentation(node.leftChild, list)
-                calculateArrayStringRepresentation(node.rightChild, list)
-            }
+        val elements = mutableListOf<Pair<KeyT, ValueT>>()
+        this.iterator().forEach {
+            elements.add(it)
         }
 
-        fun calculateHash(list: ArrayList<String>): Int {
-            var result = ""
-            for (element in list)
-                result += element
-            return result.hashCode()
-
-        }
-
-        val list = ArrayList<String>()
-        calculateArrayStringRepresentation(root, list)
-
-        return calculateHash(list)
+        return elements.hashCode()
     }
 }
