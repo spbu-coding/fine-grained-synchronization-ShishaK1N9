@@ -1,5 +1,6 @@
 package concurrent_tree
 
+import consistent_tree.ConsistentTree
 import utils.ITree
 
 import java.util.concurrent.locks.ReentrantLock
@@ -198,6 +199,26 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
         if (this == root) this@ConcurrentTree.unlock()
     }
 
+    /**
+     * Locks the whole tree.
+     */
+    private fun lockTree(lockingNode: ConcurrentNode<KeyT, ValueT>?) {
+        lockingNode?: return
+        lockingNode.lock()
+        lockTree(lockingNode.leftChild)
+        lockTree(lockingNode.rightChild)
+    }
+
+    /**
+     * Unlocks the whole tree.
+     */
+    private fun unlockTree(unlockingNode: ConcurrentNode<KeyT, ValueT>?) {
+        unlockingNode?: return
+        unlockTree(unlockingNode.leftChild)
+        unlockTree(unlockingNode.rightChild)
+        unlockingNode.unlock()
+    }
+
     fun iterator(): Iterator<Pair<KeyT, ValueT>> {
         return object : Iterator<Pair<KeyT, ValueT>> {
             private var list = ArrayList<Pair<KeyT, ValueT>>()
@@ -226,41 +247,32 @@ open class ConcurrentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
     }
 
     override fun equals(other: Any?): Boolean {
+        if (other !is ConcurrentTree<*, *>) return false
         if (this === other) return true
-        if (this.javaClass != other?.javaClass) return false
-        val otherIterator = (other as ConcurrentTree<*, *>).iterator()
-        val iterator = this.iterator()
+        lockTree(root)
 
-        while (otherIterator.hasNext() && iterator.hasNext()) {
-            val node = iterator.next()
-            val otherNode = otherIterator.next()
-            if (node.first != otherNode.first || node.second != otherNode.second)
-                return false
+        val (thisElements, otherElements) =
+            arrayOf(mutableListOf<Pair<*, *>>(), mutableListOf())
+        this.iterator().forEach {
+            thisElements.add(it)
+        }
+        (other).iterator().forEach {
+            otherElements.add(it)
         }
 
-        return !(otherIterator.hasNext() || iterator.hasNext())
+        unlockTree(root)
+        return thisElements == otherElements
     }
 
     override fun hashCode(): Int {
-        fun calculateArrayStringRepresentation(node: ConcurrentNode<KeyT, ValueT>?, list: ArrayList<String>) {
-            if (node != null) {
-                list.add(node.key.toString() + node.value.toString())
-                calculateArrayStringRepresentation(node.leftChild, list)
-                calculateArrayStringRepresentation(node.rightChild, list)
-            }
+        lockTree(root)
+
+        val elements = mutableListOf<Pair<KeyT, ValueT>>()
+        this.iterator().forEach {
+            elements.add(it)
         }
 
-        fun calculateHash(list: ArrayList<String>): Int {
-            var result = ""
-            for (element in list)
-                result += element
-            return result.hashCode()
-
-        }
-
-        val list = ArrayList<String>()
-        calculateArrayStringRepresentation(root, list)
-
-        return calculateHash(list)
+        unlockTree(root)
+        return elements.hashCode()
     }
 }
