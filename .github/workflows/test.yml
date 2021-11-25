@@ -27,9 +27,9 @@ jobs:
       - name: Run test
         run: |
           ./gradlew :clean
-          ./gradlew :test --tests "ConsistentTreeTest"
           ./gradlew :test --tests "ConcurrentTreeTest.stressTestOn3Threads"
-          ./gradlew :test --tests "ConcurrentTreeTest.modelCheckingTest"
+#          ./gradlew :test --tests "ConcurrentTreeTest.modelCheckingTest"
+          ./gradlew :test --tests "ConsistentTreeTest"
       - name: JaCoCo Coverage Report
         env:
           report_path: build/jacoco/report.csv
