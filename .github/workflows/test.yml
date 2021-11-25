@@ -26,7 +26,7 @@ jobs:
             ${{ runner.os }}-gradle
       - name: Run test
         run: |
-          ./gradlew :clean :test --tests "ConsistentTreeTest"
+          ./gradlew :clean :test
       - name: JaCoCo Coverage Report
         env:
           report_path: build/jacoco/report.csv
