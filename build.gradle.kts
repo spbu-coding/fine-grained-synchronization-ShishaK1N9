@@ -32,12 +32,21 @@ tasks.test {
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test) // tests are required to run before generating the report
-    inputs.files(file("src/main/kotlin/consistent_tree"))
     reports {
         xml.required.set(false)
         csv.required.set(true)
         csv.outputLocation.set(file("${buildDir}/jacoco/report.csv"))
         html.outputLocation.set(file("${buildDir}/reports/jacoco"))
+    }
+}
+
+tasks.withType<JacocoReport> {
+    afterEvaluate {
+        classDirectories.setFrom(
+            sourceSets.main.get().output.asFileTree.matching {
+                exclude("concurrent_tree")
+            }
+        )
     }
 }
 
