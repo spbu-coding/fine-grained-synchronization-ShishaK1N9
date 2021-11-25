@@ -1,9 +1,10 @@
 name: Test with coverage
 on:
-  pull_request:
-    branches:
-      - main
-      - work
+  push:
+#  pull_request:
+#    branches:
+#      - main
+#      - work
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -25,7 +26,7 @@ jobs:
             ${{ runner.os }}-gradle
       - name: Run test
         run: |
-          ./gradlew :clean :test
+          ./gradlew :clean :test --tests "ConsistentTreeTest"
       - name: JaCoCo Coverage Report
         env:
           report_path: build/jacoco/report.csv
