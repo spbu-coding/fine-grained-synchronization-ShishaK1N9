@@ -23,6 +23,7 @@ tasks.test {
     useJUnitPlatform()
     maxHeapSize = "2G"
     jvmArgs(
+        "-Xmx4096m",
         "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",
         "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED"
     )
@@ -38,13 +39,6 @@ tasks.jacocoTestReport {
     }
 }
 
-/*
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs = listOf(
-            "--add-opens java.base/jdk.internal.misc=ALL-UNNAMED",
-            "--add-exports java.base/jdk.internal.util=ALL-UNNAMED"
-        )
-        jvmTarget = "11"
-    }
-}*/
+    kotlinOptions.jvmTarget = "1.8"
+}
