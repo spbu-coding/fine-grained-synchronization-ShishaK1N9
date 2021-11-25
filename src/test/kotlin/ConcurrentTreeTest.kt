@@ -64,28 +64,28 @@ class ConcurrentTreeTest : VerifierState() {
     /**
      * Stress test, which runs on 5 threads.
      */
-//    @Test
-//    fun stressTestOn5Threads() = StressOptions()
-//        .actorsBefore(1)
-//        .threads(5).actorsPerThread(5)
-//        .minimizeFailedScenario(false)
-//        .check(this::class.java)
+    @Test
+    fun stressTestOn5Threads() = StressOptions()
+        .actorsBefore(1)
+        .threads(5).actorsPerThread(5)
+        .minimizeFailedScenario(false)
+        .check(this::class.java)
 
     /**
      * Stress test, which runs 500 scenarios.
      */
-//    @Test
-//    fun stressTestWith500Scenarios() = StressOptions()
-//        .iterations(500)
-//        .check(this::class.java)
+    @Test
+    fun stressTestWith500Scenarios() = StressOptions()
+        .iterations(500)
+        .check(this::class.java)
 
     /**
      * Compares concurrent tree implementation with concurrent hash map implementation.
      */
-//    @Test
-//    fun modelCheckingTest() = ModelCheckingOptions()
-//        .sequentialSpecification(SimpleTree::class.java)
-//        .check(this::class.java)
+    @Test
+    fun modelCheckingTest() = ModelCheckingOptions()
+        .sequentialSpecification(SimpleTree::class.java)
+        .check(this::class.java)
 
     override fun extractState(): Any {
         val elements = mutableListOf<Pair<Int, Int>>()
