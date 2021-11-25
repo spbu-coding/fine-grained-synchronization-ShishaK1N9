@@ -22,11 +22,11 @@ tasks.test {
     finalizedBy(tasks.jacocoTestReport)
     useJUnitPlatform()
     maxHeapSize = "2G"
-    jvmArgs(
+    /*jvmArgs(
         "-Xmx4096m",
         "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",
         "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED"
-    )
+    )*/
 }
 
 tasks.jacocoTestReport {
