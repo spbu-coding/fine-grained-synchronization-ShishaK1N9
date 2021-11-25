@@ -22,7 +22,7 @@ tasks.test {
     finalizedBy(tasks.jacocoTestReport)
     useJUnitPlatform()
     maxHeapSize = "2G"
-    // Uncomment if you want to run concurrent tests on your own PC
+    // Uncomment to run concurrent tests on your own PC
     /*jvmArgs(
         "-Xmx4096m",
         "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",
