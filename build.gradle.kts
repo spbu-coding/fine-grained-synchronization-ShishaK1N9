@@ -22,6 +22,7 @@ tasks.test {
     finalizedBy(tasks.jacocoTestReport)
     useJUnitPlatform()
     maxHeapSize = "2G"
+    // Uncomment if you want to run concurrent tests on your own PC
     /*jvmArgs(
         "-Xmx4096m",
         "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",
@@ -31,6 +32,7 @@ tasks.test {
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test) // tests are required to run before generating the report
+    inputs.files(file("src/main/kotlin/consistent_tree"))
     reports {
         xml.required.set(false)
         csv.required.set(true)
