@@ -1,8 +1,8 @@
 pull_request_rules:
-  - name: Successfully builds
+  - name: All tests are success
     conditions:
       - base=main
-      - status-success=build
+      - status-success=test
     actions:
       merge:
         method: merge
