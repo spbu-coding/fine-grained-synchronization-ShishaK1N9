@@ -7,10 +7,15 @@ package consistent_tree
  * @property parent node parent (default value is *null*)
  */
 internal class ConsistentNode<KeyT : Comparable<KeyT>, ValueT>(
-    var key: KeyT,
-    var value: ValueT,
+    initialKey: KeyT,
+    initialValue: ValueT,
     var parent: ConsistentNode<KeyT, ValueT>? = null
 ) {
+
+    var key = initialKey
+        private set
+    var value = initialValue
+        private set
 
     var leftChild: ConsistentNode<KeyT, ValueT>? = null
     var rightChild: ConsistentNode<KeyT, ValueT>? = null
