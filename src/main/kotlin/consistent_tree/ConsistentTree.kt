@@ -24,7 +24,7 @@ open class ConsistentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
                     root = root!!.leftChild ?: root!!.rightChild
                     root!!.parent = null
                 }
-                2 -> {
+                else -> {
                     val child = root!!.rightChild!!
                     child.parent = null
 
@@ -44,7 +44,7 @@ open class ConsistentTree<KeyT : Comparable<KeyT>, ValueT> : ITree<KeyT, ValueT>
                 removingNodeChild!!.parent = removingNode.parent
                 removingNode.parent!!.whichChild(removingNode).set(removingNodeChild)
             }
-            2 -> {
+            else -> {
                 val child = removingNode.rightChild!!
                 child.parent = null
 
