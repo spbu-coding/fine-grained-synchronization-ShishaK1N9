@@ -9,10 +9,15 @@ import java.util.concurrent.locks.ReentrantLock
  * @property [parent] node parent (default value is *null*)
  */
 open class ConcurrentNode<KeyT : Comparable<KeyT>, ValueT>(
-    var key: KeyT,
-    var value: ValueT,
+    initialKey: KeyT,
+    initialValue: ValueT,
     var parent: ConcurrentNode<KeyT, ValueT>? = null
 ) {
+
+    var key = initialKey
+        private set
+    var value = initialValue
+        private set
 
     var leftChild: ConcurrentNode<KeyT, ValueT>? = null
     var rightChild: ConcurrentNode<KeyT, ValueT>? = null
